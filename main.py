@@ -38,28 +38,34 @@ FREECADCMD: str | None = None
 
 
 def _locate_freecadcmd() -> str | None:
-    """Return the absolute path to ``FreeCADCmd``, or ``None``."""
-    # 1. PATH lookup (conda installs FreeCADCmd here)
-    for p in os.environ.get("PATH", "").split(os.pathsep):
-        candidate = Path(p) / "FreeCADCmd"
-        if candidate.is_file() and os.access(candidate, os.X_OK):
-            return str(candidate.resolve())
+    """Return the absolute path to ``FreeCADCmd`` / ``freecadcmd``, or ``None``."""
+    # Possible binary names (conda-forge renames FreeCADCmd -> freecadcmd)
+    names = ["FreeCADCmd", "freecadcmd", "FreeCAD", "freecad"]
 
-    # 2. Common conda locations
+    # 1. PATH lookup (conda installs the binary here)
+    for p in os.environ.get("PATH", "").split(os.pathsep):
+        for name in names:
+            candidate = Path(p) / name
+            if candidate.is_file() and os.access(candidate, os.X_OK):
+                return str(candidate.resolve())
+
+    # 2. Common conda prefix locations
     for prefix in ("/opt/conda", os.path.expanduser("~/miniforge3"),
                    os.path.expanduser("~/miniconda3")):
-        for loc in (
-            Path(prefix) / "bin" / "FreeCADCmd",
-            Path(prefix) / "envs" / "freecad" / "bin" / "FreeCADCmd",
-        ):
-            if loc.is_file() and os.access(loc, os.X_OK):
-                return str(loc.resolve())
+        for name in names:
+            for loc in (
+                Path(prefix) / "bin" / name,
+                Path(prefix) / "envs" / "freecad" / "bin" / name,
+            ):
+                if loc.is_file() and os.access(loc, os.X_OK):
+                    return str(loc.resolve())
 
-    # 3. FreeCAD installed from system package
-    for sysbin in ("/usr/bin/FreeCADCmd", "/usr/local/bin/FreeCADCmd"):
-        p = Path(sysbin)
-        if p.is_file() and os.access(p, os.X_OK):
-            return str(p.resolve())
+    # 3. System package installs
+    for name in names:
+        for sysbin in (f"/usr/bin/{name}", f"/usr/local/bin/{name}"):
+            p = Path(sysbin)
+            if p.is_file() and os.access(p, os.X_OK):
+                return str(p.resolve())
 
     return None
 # ---------------------------------------------------------------------------
