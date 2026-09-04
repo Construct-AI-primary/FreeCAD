@@ -9,7 +9,7 @@
 # enormous dependency tree every time.
 # =============================================================================
 
-FROM condaforge/miniforge3:24.7-0 AS builder
+FROM condaforge/miniforge3:latest AS builder
 
 # ── Install FreeCAD (headless) via mamba ───────────────────────────────
 # mamba solves conda's dependency graph 10-50x faster than conda.
@@ -29,7 +29,7 @@ RUN pip install --no-cache-dir \
         python-multipart==0.0.9
 
 # ── Final image ────────────────────────────────────────────────────────
-FROM condaforge/miniforge3:24.7-0
+FROM condaforge/miniforge3:latest
 
 COPY --from=builder /opt/conda /opt/conda
 
