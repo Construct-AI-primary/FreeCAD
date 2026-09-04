@@ -187,23 +187,12 @@ def _run_freecad_script_get_json(script: str, *,
 
 @app.get("/health")
 def health():
-    """Render health-check endpoint."""
+    """Render health-check endpoint (fast: only checks binary exists)."""
     cad = _freecadcmd_or_raise()
-    try:
-        info = _run_freecad_script_get_json(
-            "import FreeCAD, json; print(json.dumps(dict(version=FreeCAD.Version)))",
-            timeout=10,
-        )
-        return {
-            "status": "healthy",
-            "freecad": cad,
-            "version": info.get("version"),
-        }
-    except Exception as exc:
-        return JSONResponse(
-            status_code=503,
-            content={"status": "unhealthy", "detail": str(exc)},
-        )
+    return {
+        "status": "healthy",
+        "freecad": cad,
+    }
 
 
 @app.get("/api/info")

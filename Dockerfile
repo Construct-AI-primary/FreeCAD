@@ -37,6 +37,7 @@ COPY --from=builder /opt/conda /opt/conda
 ENV FREECAD_DISABLE_GUI=1
 ENV PYTHONIOENCODING=utf-8
 ENV PATH=/opt/conda/bin:$PATH
+ENV LD_LIBRARY_PATH=/opt/conda/lib
 
 WORKDIR /app
 
