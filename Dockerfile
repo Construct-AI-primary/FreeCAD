@@ -3,41 +3,46 @@
 # =============================================================================
 # Builds a container with FreeCAD (headless) + FastAPI wrapper so a
 # third-party application can call FreeCAD's Python API over HTTP.
+#
+# Uses mamba (10-50x faster than conda) for the massive FreeCAD dep graph,
+# then pip for lightweight Python web deps — avoids re-solving FreeCAD's
+# enormous dependency tree every time.
 # =============================================================================
 
-FROM condaforge/miniforge3:23.3.1-1 AS builder
+FROM condaforge/miniforge3:24.7-0 AS builder
 
-# Install FreeCAD + runtime Python dependencies from conda-forge
-RUN conda install -c conda-forge \
+# ── Install FreeCAD (headless) via mamba ───────────────────────────────
+# mamba solves conda's dependency graph 10-50x faster than conda.
+# FreeCAD pulls in ~200+ packages (Qt, OCC, Coin3D, VTK, etc.).
+RUN mamba install -c conda-forge \
         freecad \
         python=3.11 \
-        fastapi \
-        uvicorn \
-        python-multipart \
         -y \
-    && conda clean -afy \
+    && mamba clean -afy \
     && rm -rf /opt/conda/pkgs/*
 
-# ── Final image ──────────────────────────────────────────────────────────
-FROM condaforge/miniforge3:23.3.1-1
+# ── Install web dependencies via pip ───────────────────────────────────
+# Separate step avoids re-solving FreeCAD's enormous dependency graph.
+RUN pip install --no-cache-dir \
+        fastapi==0.115.0 \
+        uvicorn==0.29.0 \
+        python-multipart==0.0.9
+
+# ── Final image ────────────────────────────────────────────────────────
+FROM condaforge/miniforge3:24.7-0
 
 COPY --from=builder /opt/conda /opt/conda
 
-# Environment: headless mode, no display needed for FreeCADCmd
+# Headless mode – no display or GUI libraries needed
 ENV FREECAD_DISABLE_GUI=1
-ENV DISPLAY=:99
 ENV PYTHONIOENCODING=utf-8
-
-# Ensure conda environment is active for all RUN / CMD
-ENV PATH /opt/conda/bin:$PATH
-ENV CONDA_DEFAULT_ENV=base
+ENV PATH=/opt/conda/bin:$PATH
 
 WORKDIR /app
 
-# Copy the API wrapper
 COPY main.py .
 
-# Health check (Render requires this)
+# Render health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
     CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')" || exit 1
 
