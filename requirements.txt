@@ -1,0 +1,11 @@
+# =============================================================================
+# Python dependencies for the FreeCAD Headless Web Service
+# =============================================================================
+# These are installed into the conda environment inside the Docker container.
+# The Dockerfile uses `conda install` rather than pip for most packages,
+# but this file documents what's needed and can also be used for local dev.
+# =============================================================================
+
+fastapi>=0.110.0
+uvicorn>=0.29.0
+python-multipart>=0.0.9

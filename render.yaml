@@ -1,0 +1,29 @@
+# =============================================================================
+# Render Blueprint – FreeCAD Headless Web Service
+# =============================================================================
+# Deploy via:  https://dashboard.render.com/blueprints
+# Or manually: https://dashboard.render.com/  →  New Web Service  →  Docker
+# =============================================================================
+
+services:
+  - type: web
+    name: freecad-api
+    runtime: docker
+    repo: https://github.com/YOUR_GITHUB_USERNAME/YOUR_REPO_NAME  # ← CHANGE THIS
+    branch: main
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /health
+    numInstances: 1
+    plan: starter  # $7/month – sufficient for light usage
+    # plan: pro     # $20/month – for production / heavier workloads
+    envVars:
+      - key: FREECAD_DISABLE_GUI
+        value: "1"
+      - key: PYTHONIOENCODING
+        value: "utf-8"
+      - key: DISPLAY
+        value: ":99"
+    # ── Optional: increase timeout for long conversions ──
+    # envVars:
+    #   - key: TIMEOUT
+    #     value: "300"
